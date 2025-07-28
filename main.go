@@ -357,19 +357,6 @@ func main() {
 	if err := loadDataFromFile(); err != nil {
 		log.Panicf("Критическая ошибка: не удалось загрузить данные: %v", err)
 	}
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	go func() {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "Wildberries Price Bot is running!")
-		})
-		log.Printf("Starting health check web server on port %s", port)
-		if err := http.ListenAndServe(":"+port, nil); err != nil {
-			log.Fatalf("failed to start web server: %v", err)
-		}
-	}()
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
 	if token == "" {
 		log.Panic("TELEGRAM_BOT_TOKEN не установлен!")
