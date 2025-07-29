@@ -101,10 +101,13 @@ func loadDataFromFile() error {
 func getWBProductInfo(article string) (*Product, error) {
 	url := fmt.Sprintf("https://card.wb.ru/cards/v4/detail?appType=1&curr=byn&dest=-8144334&spp=30&nm=%s", article)
 	client := &http.Client{Timeout: 10 * time.Second}
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil { return nil, fmt.Errorf("ошибка при создании запроса: %w", err) }
+
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
 	req.Header.Add("Referer", fmt.Sprintf("https://www.wildberries.by/catalog/%s/detail.aspx", article))
+
 	resp, err := client.Do(req)
 	if err != nil { return nil, fmt.Errorf("ошибка при выполнении запроса к WB API: %w", err) }
 	defer resp.Body.Close()
@@ -112,8 +115,10 @@ func getWBProductInfo(article string) (*Product, error) {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 		return nil, fmt.Errorf("WB API вернул статус: %s, тело ответа: %s", resp.Status, string(bodyBytes))
 	}
+
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil { return nil, fmt.Errorf("ошибка при чтении тела ответа: %w", err) }
+	
 	var apiResponse ProductData
 	if err := json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&apiResponse); err != nil {
 		return nil, fmt.Errorf("ошибка при декодировании JSON: %w. Ответ сервера был: %s", err, string(bodyBytes))
@@ -223,7 +228,7 @@ func handleListRequest(bot *tgbotapi.BotAPI, chatID int64) {
 		responseText.WriteString(fmt.Sprintf("✅ *Товар:* %s\n*Артикул:* `%s`\n", item.ProductName,article))
 		
 		for sizeName, price := range item.LastPrices {
-			if (item.RequestedSizes[sizeName] == true) {
+			if item.RequestedSizes[sizeName] {
 				if price == 0.0 {
 					responseText.WriteString(fmt.Sprintf(" - Размер *%s*: `нет в наличии`\n", sizeName))
 				} else {
@@ -265,7 +270,7 @@ func handleUntrackRequest(bot *tgbotapi.BotAPI, chatID int64, article string) {
 }
 
 func startPriceChecker(bot *tgbotapi.BotAPI) {
-	ticker := time.NewTicker(30 * time.Minute)
+	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
