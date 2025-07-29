@@ -265,7 +265,7 @@ func handleUntrackRequest(bot *tgbotapi.BotAPI, chatID int64, article string) {
 }
 
 func startPriceChecker(bot *tgbotapi.BotAPI) {
-	ticker := time.NewTicker(30 * time.Minute)
+	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
